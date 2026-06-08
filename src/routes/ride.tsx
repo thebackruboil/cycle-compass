@@ -1,21 +1,46 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { X, Navigation2, Trash2 } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import {
+  CheckCircle2,
+  Clock3,
+  MapPin,
+  Navigation2,
+  Route as RouteIcon,
+  Trash2,
+  X,
+} from "lucide-react";
 import { BottomNav } from "@/components/BottomNav";
 import { RoutePreview } from "@/components/RoutePreview";
 import { CATEGORIES, DESTINATIONS, HOME, cyclingMinutes, distanceKm } from "@/lib/destinations";
 import { actions, useStore } from "@/lib/store";
 
+function googleMapsDirectionsUrl(stops: typeof DESTINATIONS) {
+  const params = new URLSearchParams({
+    api: "1",
+    origin: `${HOME.lat},${HOME.lng}`,
+    destination: `${HOME.lat},${HOME.lng}`,
+    travelmode: "bicycling",
+    waypoints: stops.map((stop) => `${stop.lat},${stop.lng}`).join("|"),
+    dir_action: "navigate",
+  });
+
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
+}
+
 export const Route = createFileRoute("/ride")({
   head: () => ({
     meta: [
       { title: "Ride Builder — Cycle Explorer" },
-      { name: "description", content: "Combine stops into a circular ride starting and ending at home." },
+      {
+        name: "description",
+        content: "Combine stops into a circular ride starting and ending at home.",
+      },
     ],
   }),
   component: RidePage,
 });
 
 function RidePage() {
+  const navigate = useNavigate();
   const rideIds = useStore((s) => s.ride);
   const stops = rideIds.map((id) => DESTINATIONS.find((d) => d.id === id)!).filter(Boolean);
 
@@ -26,9 +51,7 @@ function RidePage() {
   const closing = stops.length ? distanceKm(stops[stops.length - 1], HOME) : 0;
   const totalKm = legs.reduce((a, b) => a + b, 0) + closing;
 
-  const navUrl = stops.length
-    ? `https://www.google.com/maps/dir/?api=1&origin=${HOME.lat},${HOME.lng}&destination=${HOME.lat},${HOME.lng}&travelmode=bicycling&waypoints=${stops.map((s) => `${s.lat},${s.lng}`).join("|")}`
-    : "#";
+  const navUrl = stops.length ? googleMapsDirectionsUrl(stops) : "#";
 
   return (
     <div className="min-h-[100dvh] bg-background pb-28">
@@ -43,18 +66,21 @@ function RidePage() {
           <p className="mt-3 text-sm text-muted-foreground">
             Nothing in your ride yet. Add stops from the map and they'll loop back home.
           </p>
-          <Link to="/" className="mt-4 inline-block rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+          <Link
+            to="/"
+            className="mt-4 inline-block rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+          >
             Explore the map
           </Link>
         </div>
       ) : (
         <>
-          <div className="mx-5 overflow-hidden rounded-3xl border border-border bg-card">
-            <RoutePreview stops={stops} className="h-44 w-full" />
-            <div className="grid grid-cols-3 divide-x divide-border border-t border-border text-center">
-              <Stat label="Distance" value={`${totalKm.toFixed(1)} km`} />
-              <Stat label="Time" value={`${cyclingMinutes(totalKm)} min`} />
-              <Stat label="Stops" value={`${stops.length}`} />
+          <div className="mx-5 overflow-hidden rounded-[1.75rem] border border-border/80 bg-card shadow-card">
+            <RoutePreview stops={stops} className="aspect-[16/7] min-h-40 w-full" />
+            <div className="grid grid-cols-3 gap-1 border-t border-border/70 p-2">
+              <Stat icon={RouteIcon} label="Distance" value={`${totalKm.toFixed(1)} km`} />
+              <Stat icon={Clock3} label="Ride time" value={`${cyclingMinutes(totalKm)} min`} />
+              <Stat icon={MapPin} label="Stops" value={`${stops.length}`} />
             </div>
           </div>
 
@@ -73,16 +99,36 @@ function RidePage() {
                 />
               );
             })}
-            <Leg index={stops.length + 1} label="Home" sublabel={`${closing.toFixed(1)} km back`} home />
+            <Leg
+              index={stops.length + 1}
+              label="Home"
+              sublabel={`${closing.toFixed(1)} km back`}
+              home
+            />
           </ol>
 
           <div className="mt-6 flex gap-2 px-5">
-            <a href={navUrl} target="_blank" rel="noreferrer"
-              className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground">
+            <a
+              href={navUrl}
+              className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground"
+            >
               <Navigation2 className="h-4 w-4" /> Start ride
             </a>
-            <button onClick={actions.clearRide}
-              className="flex items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-sm font-semibold">
+            <button
+              onClick={() => {
+                actions.markVisitedMany(rideIds);
+                actions.clearRide();
+                navigate({ to: "/" });
+              }}
+              className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-secondary px-4 py-3 text-sm font-semibold text-secondary-foreground"
+            >
+              <CheckCircle2 className="h-4 w-4" /> Complete
+            </button>
+            <button
+              onClick={actions.clearRide}
+              className="flex items-center justify-center rounded-2xl border border-border bg-card p-3 text-muted-foreground"
+              aria-label="Clear ride"
+            >
               <Trash2 className="h-4 w-4" /> Clear
             </button>
           </div>
@@ -94,29 +140,57 @@ function RidePage() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof RouteIcon;
+  label: string;
+  value: string;
+}) {
   return (
-    <div className="px-2 py-3">
-      <div className="text-sm font-semibold">{value}</div>
-      <div className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
+    <div className="rounded-2xl px-2 py-2.5 text-center">
+      <Icon className="mx-auto mb-1.5 h-3.5 w-3.5 text-primary/70" strokeWidth={1.8} />
+      <div className="text-[15px] font-semibold tracking-tight">{value}</div>
+      <div className="mt-0.5 text-[9px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+        {label}
+      </div>
     </div>
   );
 }
 
-function Leg({ index, label, sublabel, icon, home, onRemove }: {
-  index: number; label: string; sublabel: string; icon?: string; home?: boolean; onRemove?: () => void;
+function Leg({
+  index,
+  label,
+  sublabel,
+  icon,
+  home,
+  onRemove,
+}: {
+  index: number;
+  label: string;
+  sublabel: string;
+  icon?: string;
+  home?: boolean;
+  onRemove?: () => void;
 }) {
   return (
     <li className="flex items-center gap-3 rounded-2xl border border-border bg-card p-3">
-      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lg ${home ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>
-        {home ? "⌂" : icon ?? index}
+      <div
+        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-lg ${home ? "bg-primary text-primary-foreground" : "bg-secondary"}`}
+      >
+        {home ? "⌂" : (icon ?? index)}
       </div>
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-medium">{label}</div>
         <div className="text-xs text-muted-foreground">{sublabel}</div>
       </div>
       {onRemove && (
-        <button onClick={onRemove} className="rounded-full p-1.5 text-muted-foreground hover:bg-secondary">
+        <button
+          onClick={onRemove}
+          className="rounded-full p-1.5 text-muted-foreground hover:bg-secondary"
+        >
           <X className="h-4 w-4" />
         </button>
       )}

@@ -8,7 +8,10 @@ export const Route = createFileRoute("/saved")({
   head: () => ({
     meta: [
       { title: "Saved places — Cycle Explorer" },
-      { name: "description", content: "Your favorite destinations, visited spots, and personal notes." },
+      {
+        name: "description",
+        content: "Your favorite destinations, visited spots, and personal notes.",
+      },
     ],
   }),
   component: SavedPage,
@@ -31,10 +34,13 @@ function SavedPage() {
 
         <div className="mt-4 inline-flex rounded-full bg-secondary p-1">
           {(["saved", "visited"] as const).map((t) => (
-            <button key={t} onClick={() => setTab(t)}
+            <button
+              key={t}
+              onClick={() => setTab(t)}
               className={`rounded-full px-4 py-1.5 text-xs font-semibold capitalize transition-colors ${
                 tab === t ? "bg-card shadow-[var(--shadow-card)]" : "text-muted-foreground"
-              }`}>
+              }`}
+            >
               {t} {t === "saved" ? `(${saved.length})` : `(${visited.length})`}
             </button>
           ))}
@@ -44,24 +50,34 @@ function SavedPage() {
       <div className="space-y-2 px-5">
         {items.length === 0 && (
           <div className="rounded-3xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
-            {tab === "saved" ? "Bookmark places you want to come back to." : "Places you've ridden to will show up here."}
+            {tab === "saved"
+              ? "Bookmark places you want to come back to."
+              : "Places you've ridden to will show up here."}
           </div>
         )}
         {items.map((d) => {
           const cat = CATEGORIES.find((c) => c.id === d.category)!;
           const km = distanceKm(HOME, d);
           return (
-            <Link key={d.id} to="/destination/$id" params={{ id: d.id }}
-              className="flex gap-3 overflow-hidden rounded-2xl border border-border bg-card p-2">
+            <Link
+              key={d.id}
+              to="/destination/$id"
+              params={{ id: d.id }}
+              className="flex gap-3 overflow-hidden rounded-2xl border border-border bg-card p-2"
+            >
               <img src={d.photo} alt="" className="h-20 w-20 shrink-0 rounded-xl object-cover" />
               <div className="min-w-0 flex-1 py-1">
-                <div className="text-xs text-muted-foreground">{cat.icon} {cat.label}</div>
+                <div className="text-xs text-muted-foreground">
+                  {cat.icon} {cat.label}
+                </div>
                 <div className="truncate font-medium">{d.name}</div>
                 <div className="mt-0.5 text-xs text-muted-foreground">
                   {km.toFixed(1)} km · {cyclingMinutes(km)} min
                 </div>
                 {notes[d.id] && (
-                  <div className="mt-1 line-clamp-1 text-xs italic text-foreground/70">"{notes[d.id]}"</div>
+                  <div className="mt-1 line-clamp-1 text-xs italic text-foreground/70">
+                    "{notes[d.id]}"
+                  </div>
                 )}
               </div>
             </Link>
@@ -69,9 +85,19 @@ function SavedPage() {
         })}
 
         {tab === "saved" && items.length > 0 && (
-          <button onClick={() => saved.forEach((id) => actions.markVisited(id))}
-            className="mt-2 w-full rounded-2xl border border-dashed border-border py-3 text-xs text-muted-foreground">
+          <button
+            onClick={() => actions.markVisitedMany(saved)}
+            className="mt-2 w-full rounded-2xl border border-dashed border-border py-3 text-xs text-muted-foreground"
+          >
             Mark all as visited
+          </button>
+        )}
+        {tab === "visited" && items.length > 0 && (
+          <button
+            onClick={actions.clearVisited}
+            className="mt-2 w-full rounded-2xl border border-dashed border-border py-3 text-xs text-muted-foreground"
+          >
+            Reset explored history
           </button>
         )}
       </div>
