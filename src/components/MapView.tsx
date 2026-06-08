@@ -50,8 +50,8 @@ export function MapView({ radiusKm, destinations, highlightIds, onSelect }: Prop
     if (circleRef.current) circleRef.current.remove();
     circleRef.current = L.circle([HOME.lat, HOME.lng], {
       radius: radiusKm * 1000,
-      color: "var(--color-primary)",
-      fillColor: "var(--color-primary)",
+      color: "#3f6b56",
+      fillColor: "#3f6b56",
       fillOpacity: 0.06,
       weight: 1.5,
       dashArray: "6 6",
