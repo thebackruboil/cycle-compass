@@ -59,7 +59,7 @@ function Index() {
       </div>
 
       {/* Top overlay */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-40 bg-gradient-to-b from-background/95 via-background/70 to-transparent pb-6 pt-[max(env(safe-area-inset-top),0.75rem)]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-[1000] bg-gradient-to-b from-background/95 via-background/70 to-transparent pb-6 pt-[max(env(safe-area-inset-top),0.75rem)]">
         <div className="pointer-events-auto mx-auto max-w-md px-4">
           {/* Search */}
           <div className="flex items-center gap-2 rounded-2xl bg-card px-4 py-3 shadow-[var(--shadow-card)]">
@@ -115,7 +115,7 @@ function Index() {
 
       {/* Bottom sheet */}
       <div
-        className={`absolute inset-x-0 bottom-0 z-40 mx-auto max-w-md transition-transform duration-300 ${
+        className={`absolute inset-x-0 bottom-0 z-[1000] mx-auto max-w-md transition-transform duration-300 ${
           sheetOpen ? "translate-y-0" : "translate-y-[calc(100%-7rem)]"
         }`}
         style={{ paddingBottom: "calc(4rem + env(safe-area-inset-bottom))" }}
