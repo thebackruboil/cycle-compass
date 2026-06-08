@@ -9,7 +9,7 @@ export function BottomNav() {
   ] as const;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur-lg pb-[env(safe-area-inset-bottom)]">
+    <nav className="fixed bottom-0 left-0 right-0 z-[1000] border-t border-border bg-background/95 backdrop-blur-lg pb-[env(safe-area-inset-bottom)]">
       <div className="mx-auto grid max-w-md grid-cols-3">
         {items.map(({ to, label, icon: Icon }) => (
           <Link
