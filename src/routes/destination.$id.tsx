@@ -81,7 +81,7 @@ function DestinationPage() {
           <div className="mt-6">
             <h3 className="mb-2 text-sm font-semibold">Nearby</h3>
             <div className="flex flex-wrap gap-2">
-              {d.nearby.map((n) => (
+              {d.nearby.map((n: string) => (
                 <span key={n} className="rounded-full bg-secondary px-3 py-1 text-xs text-secondary-foreground">{n}</span>
               ))}
             </div>
