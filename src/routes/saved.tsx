@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { BottomNav } from "@/components/BottomNav";
+import { PlacePhoto } from "@/components/PlacePhoto";
 import { CATEGORIES, DESTINATIONS, HOME, cyclingMinutes, distanceKm } from "@/lib/destinations";
 import { actions, useStore } from "@/lib/store";
 
@@ -27,19 +28,24 @@ function SavedPage() {
   const items = ids.map((id) => DESTINATIONS.find((d) => d.id === id)!).filter(Boolean);
 
   return (
-    <div className="min-h-[100dvh] bg-background pb-28">
-      <header className="px-5 pb-4 pt-[max(env(safe-area-inset-top),1.25rem)]">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground">Your places</p>
-        <h1 className="mt-1 text-3xl">Saved</h1>
+    <div className="min-h-[100dvh] bg-background pb-[calc(5rem+env(safe-area-inset-bottom))]">
+      <header className="px-5 pb-5 pt-[max(env(safe-area-inset-top),1.25rem)]">
+        <p className="ios-footnote font-medium">Your Places</p>
+        <h1 className="ios-large-title mt-1">Saved</h1>
 
-        <div className="mt-4 inline-flex rounded-full bg-secondary p-1">
+        <div
+          className="mt-4 grid w-full grid-cols-2 rounded-xl bg-secondary p-0.5"
+          role="group"
+          aria-label="Saved places view"
+        >
           {(["saved", "visited"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`rounded-full px-4 py-1.5 text-xs font-semibold capitalize transition-colors ${
+              className={`ios-pressed ios-control rounded-[0.625rem] px-4 text-[13px] font-semibold capitalize transition-colors ${
                 tab === t ? "bg-card shadow-[var(--shadow-card)]" : "text-muted-foreground"
               }`}
+              aria-pressed={tab === t}
             >
               {t} {t === "saved" ? `(${saved.length})` : `(${visited.length})`}
             </button>
@@ -63,9 +69,9 @@ function SavedPage() {
               key={d.id}
               to="/destination/$id"
               params={{ id: d.id }}
-              className="flex gap-3 overflow-hidden rounded-2xl border border-border bg-card p-2"
+              className="ios-pressed flex min-h-24 gap-3 overflow-hidden rounded-2xl border border-border bg-card p-2"
             >
-              <img src={d.photo} alt="" className="h-20 w-20 shrink-0 rounded-xl object-cover" />
+              <PlacePhoto destination={d} className="h-20 w-20 shrink-0 rounded-xl" />
               <div className="min-w-0 flex-1 py-1">
                 <div className="text-xs text-muted-foreground">
                   {cat.icon} {cat.label}
@@ -87,7 +93,7 @@ function SavedPage() {
         {tab === "saved" && items.length > 0 && (
           <button
             onClick={() => actions.markVisitedMany(saved)}
-            className="mt-2 w-full rounded-2xl border border-dashed border-border py-3 text-xs text-muted-foreground"
+            className="ios-pressed ios-control mt-2 w-full rounded-xl border border-dashed border-border px-3 text-[13px] font-medium text-muted-foreground"
           >
             Mark all as visited
           </button>
@@ -95,7 +101,7 @@ function SavedPage() {
         {tab === "visited" && items.length > 0 && (
           <button
             onClick={actions.clearVisited}
-            className="mt-2 w-full rounded-2xl border border-dashed border-border py-3 text-xs text-muted-foreground"
+            className="ios-pressed ios-control mt-2 w-full rounded-xl border border-dashed border-border px-3 text-[13px] font-medium text-muted-foreground"
           >
             Reset explored history
           </button>

@@ -1,25 +1,37 @@
 # Cycle Compass
 
-Discover nearby destinations, build scenic cycling loops, and save memorable
-places around my home in Munich.
+Get out of the house, pick somewhere worth cycling to, and turn an ordinary
+errand into a small adventure.
 
-Cycle Compass is a mobile-first cycling discovery app for finding places worth
-riding to without planning an entire day. Browse an interactive map, filter
-destinations by distance and category, combine stops into a loop, and open the
-finished ride in Google Maps.
+Cycle Compass is a personal, mobile-first cycling companion built around
+northern Munich. It helps me choose a destination, build a simple loop from
+home, and start riding without planning an entire day.
 
-## Features
+## Why I Built This
 
-- Explore cafes, bakeries, parks, lakes, viewpoints, museums, markets, and
-  hidden gems around Munich
-- Filter destinations by a 5, 10, or 15 km radius
-- Search and browse places on an interactive Leaflet map
-- Start with curated multi-stop ride suggestions
-- Build a circular ride that begins and ends at home
-- View estimated distance and cycling time
-- Save places, track visited destinations, and add personal notes
-- Keep ride and saved-place data locally in the browser
-- Open destinations and complete rides in Google Maps for bicycle navigation
+I made Cycle Compass because I wanted a gentle reason to get out of the house
+and cycle more often.
+
+I already have places and routines I enjoy, especially going to supermarkets.
+The app turns those familiar habits into ride prompts: it can pick a different
+nearby supermarket, suggest a few stops, or surface somewhere new when I do not
+know where to go.
+
+The goal is not to optimize every ride. It is to make starting one easier.
+
+## Current Features
+
+- Browse 91 curated destinations across 11 categories around Munich
+- Filter the map by category, a 5, 10, or 15 km radius, and explored status
+- Shuffle suggested multi-stop rides that avoid already visited places
+- Start a supermarket run that chooses a different nearby store
+- Swipe through destinations to save or pass on them
+- Build a multi-stop loop that starts and ends at home
+- See approximate distance and cycling time before leaving
+- Save places, mark visits, and write personal notes
+- Open a destination or complete loop in Google Maps for bicycle navigation
+- Keep personal data in browser `localStorage`
+- Install the app as a mobile-friendly PWA
 
 ## Tech Stack
 
@@ -60,6 +72,9 @@ bun run build      # Create a production build
 bun run preview    # Preview the production build
 bun run lint       # Run ESLint
 bun run format     # Format the project with Prettier
+bun run deploy     # Build and deploy to Cloudflare Workers
+bun run deploy:dry # Validate a Cloudflare deployment
+bun run photos:refresh # Refresh the destination photo catalog
 ```
 
 ## Project Structure
@@ -73,27 +88,35 @@ src/
 ├── router.tsx     # Router configuration
 ├── server.ts      # TanStack Start server entry
 └── styles.css     # Global styles and design tokens
+scripts/
+└── fetch-destination-photos.ts # Wikimedia/OpenStreetMap photo catalog tool
+public/
+├── manifest.webmanifest        # PWA metadata
+└── sw.js                       # Service worker
 ```
 
 ## Current Scope
 
 The app currently uses:
 
-- A curated, static catalog of destinations around Munich
-- A fixed demo home location in northern Munich
+- A curated, static catalog of 91 destinations around Munich
+- A fixed home location in northern Munich
 - Straight-line distances and approximate cycling times
 - Browser `localStorage` for saved places, rides, visits, and notes
 - External map tiles from CARTO and OpenStreetMap data
+- Google Maps for actual bicycle directions
 
-It is a discovery prototype rather than a turn-by-turn routing engine. Venue
-details and coordinates should be revalidated before a public launch.
+It is a personal discovery prototype rather than a turn-by-turn routing
+engine. Suggested loops are assembled from curated stops and are not optimized
+against the street or cycle-path network. Venue details and coordinates should
+be revalidated before a public launch.
 
 ## Roadmap
 
-- Use the rider's current location or a configurable home address
+- Make the home location configurable
 - Add real bicycle-route distance, elevation, and surface data
-- Generate personalized ride suggestions
-- Reorder stops and optimize complete loops
+- Personalize suggestions using routines, preferences, and ride history
+- Reorder stops and optimize loops against real cycling routes
 - Sync saved places and ride history across devices
 - Expand the destination catalog beyond Munich
 
@@ -102,4 +125,6 @@ details and coordinates should be revalidated before a public launch.
 Map data is provided by
 [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), with map
 tiles from [CARTO](https://carto.com/). Destination imagery is sourced from
-[Unsplash](https://unsplash.com/).
+[Wikimedia Commons](https://commons.wikimedia.org/), using exact image links
+from OpenStreetMap where available. Clearly labeled nearby-area photos fill
+gaps when no exact place image exists.

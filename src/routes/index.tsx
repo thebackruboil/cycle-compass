@@ -4,11 +4,13 @@ import {
   useMemo,
   useRef,
   useState,
+  type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { Search, Plus, Bookmark, ChevronUp, RefreshCw, ShoppingCart } from "lucide-react";
+import { Plus, Bookmark, ChevronDown, RefreshCw, ShoppingCart } from "lucide-react";
 import { MapView } from "@/components/MapView";
 import { BottomNav } from "@/components/BottomNav";
+import { PlacePhoto } from "@/components/PlacePhoto";
 import {
   CATEGORIES,
   DESTINATIONS,
@@ -45,12 +47,12 @@ const RADII = [3, 5, 10] as const;
 const SHEET_DRAG_THRESHOLD = 56;
 const ADVENTURE_ROTATION_KEY = "cycle-explorer-adventure-rotation";
 const EXPLORER_VIEW_KEY = "cycle-explorer-view";
+const EXPLORER_RADIUS_KEY = "cycle-explorer-radius";
 const LAST_SUPERMARKET_KEY = "cycle-explorer-last-supermarket";
 
 interface ExplorerView {
   radius: number;
   activeCategories: Category[];
-  query: string;
   showVisited: boolean;
   sheetOpen: boolean;
 }
@@ -95,19 +97,28 @@ function Index() {
   const navigate = useNavigate();
   const [radius, setRadius] = useState<number>(5);
   const [active, setActive] = useState<Set<Category>>(new Set());
-  const [query, setQuery] = useState("");
   const [showVisited, setShowVisited] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(true);
   const [sheetDragY, setSheetDragY] = useState(0);
   const [adventureRotation, setAdventureRotation] = useState(0);
   const [viewRestored, setViewRestored] = useState(false);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const sheetScrollRef = useRef<HTMLDivElement>(null);
   const sheetDragStartY = useRef<number | null>(null);
   const sheetWasDragged = useRef(false);
-  const saved = useStore((s) => s.saved);
   const ride = useStore((s) => s.ride);
   const visited = useStore((s) => s.visited);
 
   useEffect(() => {
+    try {
+      const storedRadius = Number(localStorage.getItem(EXPLORER_RADIUS_KEY));
+      if (RADII.includes(storedRadius as (typeof RADII)[number])) {
+        setRadius(storedRadius);
+      }
+    } catch {
+      // The default radius is used when persistent storage is unavailable.
+    }
+
     try {
       const raw = sessionStorage.getItem(EXPLORER_VIEW_KEY);
       if (raw) {
@@ -126,7 +137,6 @@ function Index() {
             ),
           );
         }
-        if (typeof view.query === "string") setQuery(view.query);
         if (typeof view.showVisited === "boolean") setShowVisited(view.showVisited);
         if (typeof view.sheetOpen === "boolean") setSheetOpen(view.sheetOpen);
       }
@@ -142,7 +152,6 @@ function Index() {
     const view: ExplorerView = {
       radius,
       activeCategories: [...active],
-      query,
       showVisited,
       sheetOpen,
     };
@@ -151,7 +160,12 @@ function Index() {
     } catch {
       // The current page still retains the view when storage is unavailable.
     }
-  }, [active, query, radius, sheetOpen, showVisited, viewRestored]);
+    try {
+      localStorage.setItem(EXPLORER_RADIUS_KEY, String(radius));
+    } catch {
+      // The selected radius still works for the current page.
+    }
+  }, [active, radius, sheetOpen, showVisited, viewRestored]);
 
   useEffect(() => {
     try {
@@ -164,14 +178,95 @@ function Index() {
     }
   }, []);
 
+  useEffect(() => {
+    const sheet = sheetRef.current;
+    if (!sheet) return;
+
+    let startX = 0;
+    let startY: number | null = null;
+    let dragActive = false;
+    let startedInScrollArea = false;
+
+    const handleTouchStart = (event: TouchEvent) => {
+      if (event.touches.length !== 1) return;
+
+      const touch = event.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      dragActive = false;
+      sheetWasDragged.current = false;
+      startedInScrollArea =
+        event.target instanceof Node && Boolean(sheetScrollRef.current?.contains(event.target));
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      if (startY === null || event.touches.length !== 1) return;
+
+      const touch = event.touches[0];
+      const movementY = touch.clientY - startY;
+      const movementX = touch.clientX - startX;
+      if (Math.abs(movementY) <= Math.abs(movementX)) return;
+
+      if (sheetOpen) {
+        if (movementY <= 0) return;
+        if (startedInScrollArea && (sheetScrollRef.current?.scrollTop ?? 0) > 0) return;
+      } else if (movementY >= 0) {
+        return;
+      }
+
+      event.preventDefault();
+      dragActive = true;
+      sheetDragStartY.current = startY;
+      sheetWasDragged.current ||= Math.abs(movementY) > 6;
+      setSheetDragY(sheetOpen ? Math.max(0, movementY) : Math.min(0, movementY));
+    };
+
+    const finishTouchDrag = (event: TouchEvent) => {
+      if (startY === null) return;
+
+      const movement = event.changedTouches[0]?.clientY - startY;
+      if (dragActive && Number.isFinite(movement)) {
+        if (movement > SHEET_DRAG_THRESHOLD) {
+          setSheetOpen(false);
+        } else if (movement < -SHEET_DRAG_THRESHOLD) {
+          setSheetOpen(true);
+        }
+      }
+
+      startY = null;
+      dragActive = false;
+      sheetDragStartY.current = null;
+      setSheetDragY(0);
+    };
+
+    const cancelTouchDrag = () => {
+      startY = null;
+      dragActive = false;
+      sheetDragStartY.current = null;
+      sheetWasDragged.current = false;
+      setSheetDragY(0);
+    };
+
+    sheet.addEventListener("touchstart", handleTouchStart, { passive: true });
+    sheet.addEventListener("touchmove", handleTouchMove, { passive: false });
+    sheet.addEventListener("touchend", finishTouchDrag, { passive: true });
+    sheet.addEventListener("touchcancel", cancelTouchDrag, { passive: true });
+
+    return () => {
+      sheet.removeEventListener("touchstart", handleTouchStart);
+      sheet.removeEventListener("touchmove", handleTouchMove);
+      sheet.removeEventListener("touchend", finishTouchDrag);
+      sheet.removeEventListener("touchcancel", cancelTouchDrag);
+    };
+  }, [sheetOpen]);
+
   const visible = useMemo(() => {
     return DESTINATIONS.map((d) => ({ ...d, km: distanceKm(HOME, d) }))
       .filter((d) => d.km <= radius)
       .filter((d) => showVisited || !visited.includes(d.id))
       .filter((d) => (active.size === 0 ? true : active.has(d.category)))
-      .filter((d) => (query ? d.name.toLowerCase().includes(query.toLowerCase()) : true))
       .sort((a, b) => a.km - b.km);
-  }, [radius, active, query, showVisited, visited]);
+  }, [radius, active, showVisited, visited]);
 
   const adventures = useMemo(
     () => buildAdventures(visited, adventureRotation),
@@ -229,13 +324,16 @@ function Index() {
     setActive(next);
   };
 
-  const handleSheetPointerDown = (event: ReactPointerEvent<HTMLButtonElement>) => {
+  const handleSheetPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") return;
+
     sheetDragStartY.current = event.clientY;
     sheetWasDragged.current = false;
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
-  const handleSheetPointerMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
+  const handleSheetPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") return;
     if (sheetDragStartY.current === null) return;
 
     const movement = event.clientY - sheetDragStartY.current;
@@ -244,7 +342,8 @@ function Index() {
     setSheetDragY(nextDragY);
   };
 
-  const finishSheetDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
+  const finishSheetDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") return;
     if (sheetDragStartY.current === null) return;
 
     const movement = event.clientY - sheetDragStartY.current;
@@ -261,13 +360,22 @@ function Index() {
     }
   };
 
-  const cancelSheetDrag = (event: ReactPointerEvent<HTMLButtonElement>) => {
+  const cancelSheetDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") return;
     sheetDragStartY.current = null;
     sheetWasDragged.current = false;
     setSheetDragY(0);
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
+  };
+
+  const suppressClickAfterSheetDrag = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (!sheetWasDragged.current) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    sheetWasDragged.current = false;
   };
 
   return (
@@ -284,35 +392,35 @@ function Index() {
       </div>
 
       {/* Top overlay */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-[1000] bg-gradient-to-b from-background/95 via-background/70 to-transparent pb-6 pt-[max(env(safe-area-inset-top),0.75rem)]">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-[1000] bg-gradient-to-b from-background/90 via-background/55 to-transparent pb-7 pt-[max(env(safe-area-inset-top),0.75rem)]">
         <div className="pointer-events-auto mx-auto max-w-md px-4">
-          {/* Search */}
-          <div className="flex items-center gap-2 rounded-2xl bg-card px-4 py-3 shadow-[var(--shadow-card)]">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Where to today?"
-              className="flex-1 bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none"
-            />
-            <Link to="/saved" className="rounded-full bg-secondary p-1.5 text-secondary-foreground">
-              <Bookmark className="h-4 w-4" />
+          <div className="flex items-center justify-between">
+            {/* Radius selector */}
+            <div
+              className="ios-material inline-flex rounded-[1rem] p-1"
+              role="group"
+              aria-label="Map radius"
+            >
+              {RADII.map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setRadius(r)}
+                  className={`ios-pressed ios-control rounded-xl px-4 text-[13px] font-semibold transition-colors ${
+                    radius === r ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                  }`}
+                  aria-pressed={radius === r}
+                >
+                  {r} km
+                </button>
+              ))}
+            </div>
+            <Link
+              to="/saved"
+              aria-label="View saved places"
+              className="ios-material ios-pressed ios-control flex items-center justify-center rounded-full text-foreground"
+            >
+              <Bookmark className="h-5 w-5" />
             </Link>
-          </div>
-
-          {/* Radius selector */}
-          <div className="mt-3 inline-flex rounded-full bg-card p-1 shadow-[var(--shadow-card)]">
-            {RADII.map((r) => (
-              <button
-                key={r}
-                onClick={() => setRadius(r)}
-                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
-                  radius === r ? "bg-primary text-primary-foreground" : "text-muted-foreground"
-                }`}
-              >
-                {r} km
-              </button>
-            ))}
           </div>
 
           {/* Category chips */}
@@ -320,7 +428,7 @@ function Index() {
             {visited.length > 0 && (
               <button
                 onClick={() => setShowVisited((show) => !show)}
-                className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                className={`ios-pressed ios-control flex shrink-0 items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium transition-colors ${
                   showVisited
                     ? "border-primary bg-primary text-primary-foreground"
                     : "border-border bg-card text-foreground"
@@ -337,7 +445,7 @@ function Index() {
                 <button
                   key={c.id}
                   onClick={() => toggleCat(c.id)}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                  className={`ios-pressed ios-control flex shrink-0 items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium transition-colors ${
                     on
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-border bg-card text-foreground"
@@ -354,42 +462,63 @@ function Index() {
 
       {/* Bottom sheet */}
       <div
-        className={`absolute inset-x-0 bottom-0 z-[1000] mx-auto max-w-md ${
-          sheetDragStartY.current === null ? "transition-transform duration-300" : ""
+        className={`absolute inset-x-0 bottom-0 z-[1000] mx-auto max-w-md px-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] ${
+          sheetDragStartY.current === null
+            ? "transition-[height] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]"
+            : ""
         }`}
         style={{
-          paddingBottom: "calc(4rem + env(safe-area-inset-bottom))",
-          transform: sheetOpen
-            ? `translateY(${sheetDragY}px)`
-            : `translateY(calc(100% - 7rem + ${sheetDragY}px))`,
+          height: sheetOpen
+            ? `calc(100dvh - max(env(safe-area-inset-top), 0.5rem) - ${Math.max(0, sheetDragY)}px)`
+            : `calc(16rem + ${Math.max(0, -sheetDragY)}px)`,
         }}
       >
-        <div className="rounded-t-3xl bg-card shadow-[var(--shadow-sheet)]">
-          <button
-            onClick={() => {
-              if (sheetWasDragged.current) {
-                sheetWasDragged.current = false;
-                return;
-              }
-              setSheetOpen((open) => !open);
-            }}
-            onPointerDown={handleSheetPointerDown}
-            onPointerMove={handleSheetPointerMove}
-            onPointerUp={finishSheetDrag}
-            onPointerCancel={cancelSheetDrag}
-            className="flex h-11 w-full touch-none cursor-grab flex-col items-center justify-center active:cursor-grabbing"
-            aria-label={sheetOpen ? "Hide places" : "Show places"}
-            aria-expanded={sheetOpen}
+        <div
+          ref={sheetRef}
+          onPointerDown={handleSheetPointerDown}
+          onPointerMove={handleSheetPointerMove}
+          onPointerUp={finishSheetDrag}
+          onPointerCancel={cancelSheetDrag}
+          onClickCapture={suppressClickAfterSheetDrag}
+          className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-white/35 bg-background/88 shadow-[0_10px_40px_color-mix(in_oklab,var(--foreground)_22%,transparent)] backdrop-blur-2xl"
+        >
+          <div
+            className="flex h-7 w-full shrink-0 touch-none cursor-grab flex-col items-center justify-center active:cursor-grabbing"
+            aria-hidden="true"
           >
-            <div className="h-1.5 w-10 rounded-full bg-border" />
-          </button>
+            <div className="h-1.5 w-9 rounded-full bg-muted-foreground/25" />
+          </div>
 
-          <div className="max-h-[55dvh] overflow-y-auto px-5 pb-6">
+          <div className="flex shrink-0 items-center justify-between border-b border-border/50 px-5 pb-3">
+            <div>
+              <h2 className="text-[17px] font-semibold tracking-tight">
+                {visible.length} {visible.length === 1 ? "place" : "places"} nearby
+              </h2>
+              <p className="ios-footnote">
+                Within {radius} km
+                {active.size > 0 ? ` · ${active.size} filters` : " · All categories"}
+              </p>
+            </div>
+            <button
+              onClick={() => setSheetOpen((open) => !open)}
+              className="ios-pressed ios-control flex items-center justify-center rounded-full bg-secondary text-muted-foreground"
+              aria-label={sheetOpen ? "Collapse places" : "Expand places"}
+              aria-expanded={sheetOpen}
+            >
+              <ChevronDown
+                className={`h-5 w-5 transition-transform duration-300 ${
+                  sheetOpen ? "" : "rotate-180"
+                }`}
+              />
+            </button>
+          </div>
+
+          <div ref={sheetScrollRef} className="min-h-0 flex-1 overflow-y-auto px-5 pb-5 pt-4">
             {/* Suggestions */}
-            <div className="mb-2 flex items-center justify-between">
+            <div className="mb-3 flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-semibold">Smart rides</h2>
-                <span className="text-[11px] text-muted-foreground">
+                <h3 className="text-[15px] font-semibold">Suggested rides</h3>
+                <span className="ios-footnote">
                   {visited.length > 0
                     ? `${visited.length} explored · only fresh stops shown`
                     : "Fresh adventures from your doorstep"}
@@ -397,7 +526,7 @@ function Index() {
               </div>
               <button
                 onClick={refreshAdventures}
-                className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground"
+                className="ios-pressed ios-control flex items-center gap-1.5 rounded-full bg-secondary px-3 text-[13px] font-semibold text-secondary-foreground"
                 aria-label="Refresh smart rides"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
@@ -408,7 +537,7 @@ function Index() {
             <div className="no-scrollbar -mx-5 flex gap-3 overflow-x-auto px-5 pb-4">
               <button
                 onClick={startSupermarketRun}
-                className="group w-64 shrink-0 overflow-hidden rounded-2xl border border-border bg-background text-left transition-shadow hover:shadow-[var(--shadow-card)]"
+                className="ios-pressed group w-64 shrink-0 overflow-hidden rounded-[1.25rem] border border-border bg-background text-left transition-shadow hover:shadow-[var(--shadow-card)]"
               >
                 <div className="relative flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br from-primary via-primary/80 to-accent">
                   <ShoppingCart className="h-14 w-14 text-primary-foreground/90 transition-transform duration-500 group-hover:scale-110" />
@@ -438,6 +567,7 @@ function Index() {
                     const prev = i === 0 ? HOME : stops[i - 1];
                     return acc + distanceKm(prev, d);
                   }, 0) + distanceKm(stops[stops.length - 1], HOME);
+                const photoStop = stops.find((stop) => stop.photo);
                 return (
                   <button
                     key={`${s.id}-${adventureRotation}`}
@@ -446,15 +576,15 @@ function Index() {
                       stops.forEach((d) => actions.addToRide(d.id));
                       navigate({ to: "/ride" });
                     }}
-                    className="group w-64 shrink-0 overflow-hidden rounded-2xl border border-border bg-background text-left transition-shadow hover:shadow-[var(--shadow-card)]"
+                    className="ios-pressed group w-64 shrink-0 overflow-hidden rounded-[1.25rem] border border-border bg-background text-left transition-shadow hover:shadow-[var(--shadow-card)]"
                   >
                     <div className="relative h-36 overflow-hidden bg-gradient-to-br from-primary/35 via-accent/25 to-muted">
-                      <img
-                        src={s.image}
-                        alt=""
-                        loading="eager"
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      />
+                      {photoStop && (
+                        <PlacePhoto
+                          destination={photoStop}
+                          className="h-full w-full transition-transform duration-500 group-hover:scale-105"
+                        />
+                      )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/5 to-black/15" />
                       <div className="absolute left-3 top-3 rounded-full bg-card/90 px-2.5 py-1 text-xs backdrop-blur">
                         {s.emoji} {stops.length} stops
@@ -486,21 +616,26 @@ function Index() {
             </div>
 
             {/* Destinations list */}
-            <h2 className="mt-2 mb-3 text-lg font-semibold">Nearby destinations</h2>
-            <ul className="space-y-2">
+            <div className="mb-2 mt-2 flex items-end justify-between">
+              <h3 className="text-[15px] font-semibold">All nearby places</h3>
+              <span className="text-[12px] text-muted-foreground">Nearest first</span>
+            </div>
+            <ul className="divide-y divide-border/70 overflow-hidden rounded-[1.25rem] bg-card">
               {visible.map((d) => {
                 const cat = CATEGORIES.find((c) => c.id === d.category)!;
                 const onRide = ride.includes(d.id);
-                const isSaved = saved.includes(d.id);
                 return (
-                  <li key={d.id}>
+                  <li key={d.id} className="flex min-h-[4.75rem] items-center">
                     <Link
                       to="/destination/$id"
                       params={{ id: d.id }}
-                      className="flex items-center gap-3 rounded-2xl border border-border bg-background p-3 transition-colors hover:bg-secondary/50"
+                      className="ios-pressed flex min-w-0 flex-1 items-center gap-3 py-2.5 pl-3 transition-colors hover:bg-secondary/50"
                     >
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary text-2xl">
-                        {cat.icon}
+                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[0.85rem] bg-secondary">
+                        <PlacePhoto destination={d} className="h-full w-full" />
+                        <span className="absolute bottom-0.5 right-0.5 rounded-md bg-card/90 px-1 text-[12px] shadow-sm">
+                          {cat.icon}
+                        </span>
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="truncate font-medium">{d.name}</div>
@@ -508,44 +643,31 @@ function Index() {
                           {d.km.toFixed(1)} km · {cyclingMinutes(d.km)} min · {cat.label}
                         </div>
                       </div>
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          actions.addToRide(d.id);
-                        }}
-                        className={`shrink-0 rounded-full p-2 transition-colors ${
-                          onRide
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-secondary text-secondary-foreground"
-                        }`}
-                        aria-label="Add to ride"
-                      >
-                        <Plus className="h-4 w-4" />
-                      </button>
                     </Link>
+                    <button
+                      onClick={() => actions.addToRide(d.id)}
+                      className={`ios-pressed ios-control mr-3 flex shrink-0 items-center justify-center rounded-full transition-colors ${
+                        onRide
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary text-secondary-foreground"
+                      }`}
+                      aria-label={onRide ? `${d.name} is on your ride` : `Add ${d.name} to ride`}
+                    >
+                      <Plus className="h-5 w-5" />
+                    </button>
                   </li>
                 );
               })}
               {visible.length === 0 && (
-                <li className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                <li className="p-6 text-center text-sm text-muted-foreground">
                   Nothing matches yet — widen the radius or clear filters.
                 </li>
               )}
             </ul>
           </div>
+          <BottomNav embedded />
         </div>
-
-        {!sheetOpen && (
-          <button
-            onClick={() => setSheetOpen(true)}
-            className="absolute left-1/2 top-2 -translate-x-1/2 rounded-full bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground shadow"
-          >
-            <ChevronUp className="inline h-3 w-3" /> Show places
-          </button>
-        )}
       </div>
-
-      <BottomNav />
     </div>
   );
 }
