@@ -1,7 +1,7 @@
 # Cycle Compass
 
 Discover nearby destinations, build scenic cycling loops, and save memorable
-places around Munich.
+places around my home in Munich.
 
 Cycle Compass is a mobile-first cycling discovery app for finding places worth
 riding to without planning an entire day. Browse an interactive map, filter
