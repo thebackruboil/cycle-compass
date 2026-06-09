@@ -105,6 +105,7 @@ be revalidated before a public launch.
 - Make the home location configurable
 - Add real bicycle-route distance, elevation, and surface data
 - Personalize suggestions using routines, preferences, and ride history
+- Use real photos that you supply yourself
 - Reorder stops and optimize loops against real cycling routes
 - Sync saved places and ride history across devices
 - Expand the destination catalog beyond Munich
