@@ -1,31 +1,20 @@
 # Cycle Compass
 
-Get out of the house, pick somewhere worth cycling to, and turn an ordinary
-errand into a small adventure.
+A small cycling app I built to help me get out of the house more often.
 
-Cycle Compass is a personal, mobile-first cycling companion built around
-northern Munich. It helps me choose a destination, build a simple loop from
-home, and start riding without planning an entire day.
+The idea is simple: pick somewhere nearby, create a simple loop from home, and just start riding.
 
-## Why I Built This
+It is mainly built around northern Munich, where I usually cycle. I often ride to supermarkets or familiar places, so the app uses that habit as a starting point. It can suggest a different supermarket, add a few nearby stops, or give me somewhere new to go when I do not want to think too much.
 
-I made Cycle Compass because I wanted a gentle reason to get out of the house
-and cycle more often.
-
-I already have places and routines I enjoy, especially going to supermarkets.
-The app turns those familiar habits into ride prompts: it can pick a different
-nearby supermarket, suggest a few stops, or surface somewhere new when I do not
-know where to go.
-
-The goal is not to optimize every ride. It is to make starting one easier.
+I did not build this to optimize every ride. I built it to make starting easier.
 
 ## Current Features
 
 - Browse 91 curated destinations across 11 categories around Munich
-- Filter the map by category, a 5, 10, or 15 km radius, and explored status
+- Filter the map by category, a 3, 5, or 10 km radius, and explored status
 - Shuffle suggested multi-stop rides that avoid already visited places
 - Start a supermarket run that chooses a different nearby store
-- Swipe through destinations to save or pass on them
+- Swipe through destinations to save or pass on them a la Tinder
 - Build a multi-stop loop that starts and ends at home
 - See approximate distance and cycling time before leaving
 - Save places, mark visits, and write personal notes
@@ -111,7 +100,7 @@ engine. Suggested loops are assembled from curated stops and are not optimized
 against the street or cycle-path network. Venue details and coordinates should
 be revalidated before a public launch.
 
-## Roadmap
+## Roadmap (if ever I touch it)
 
 - Make the home location configurable
 - Add real bicycle-route distance, elevation, and surface data
