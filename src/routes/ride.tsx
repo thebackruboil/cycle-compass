@@ -54,10 +54,10 @@ function RidePage() {
   const navUrl = stops.length ? googleMapsDirectionsUrl(stops) : "#";
 
   return (
-    <div className="min-h-[100dvh] bg-background pb-28">
-      <header className="px-5 pb-4 pt-[max(env(safe-area-inset-top),1.25rem)]">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground">Ride builder</p>
-        <h1 className="mt-1 text-3xl">Today's loop</h1>
+    <div className="min-h-[100dvh] bg-background pb-[calc(5rem+env(safe-area-inset-bottom))]">
+      <header className="px-5 pb-5 pt-[max(env(safe-area-inset-top),1.25rem)]">
+        <p className="ios-footnote font-medium">Ride Builder</p>
+        <h1 className="ios-large-title mt-1">Today's Loop</h1>
       </header>
 
       {stops.length === 0 ? (
@@ -68,7 +68,7 @@ function RidePage() {
           </p>
           <Link
             to="/"
-            className="mt-4 inline-block rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+            className="ios-pressed ios-control mt-4 inline-flex items-center rounded-xl bg-primary px-4 text-[15px] font-semibold text-primary-foreground"
           >
             Explore the map
           </Link>
@@ -110,7 +110,7 @@ function RidePage() {
           <div className="mt-6 flex gap-2 px-5">
             <a
               href={navUrl}
-              className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground"
+              className="ios-pressed ios-control flex flex-1 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-[15px] font-semibold text-primary-foreground"
             >
               <Navigation2 className="h-4 w-4" /> Start ride
             </a>
@@ -120,16 +120,16 @@ function RidePage() {
                 actions.clearRide();
                 navigate({ to: "/" });
               }}
-              className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-secondary px-4 py-3 text-sm font-semibold text-secondary-foreground"
+              className="ios-pressed ios-control flex flex-1 items-center justify-center gap-2 rounded-xl bg-secondary px-4 text-[15px] font-semibold text-secondary-foreground"
             >
               <CheckCircle2 className="h-4 w-4" /> Complete
             </button>
             <button
               onClick={actions.clearRide}
-              className="flex items-center justify-center rounded-2xl border border-border bg-card p-3 text-muted-foreground"
+              className="ios-pressed ios-control flex items-center justify-center rounded-xl border border-border bg-card text-muted-foreground"
               aria-label="Clear ride"
             >
-              <Trash2 className="h-4 w-4" /> Clear
+              <Trash2 className="h-5 w-5" />
             </button>
           </div>
         </>
@@ -153,9 +153,7 @@ function Stat({
     <div className="rounded-2xl px-2 py-2.5 text-center">
       <Icon className="mx-auto mb-1.5 h-3.5 w-3.5 text-primary/70" strokeWidth={1.8} />
       <div className="text-[15px] font-semibold tracking-tight">{value}</div>
-      <div className="mt-0.5 text-[9px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-        {label}
-      </div>
+      <div className="mt-0.5 text-[11px] font-medium text-muted-foreground">{label}</div>
     </div>
   );
 }
@@ -189,7 +187,8 @@ function Leg({
       {onRemove && (
         <button
           onClick={onRemove}
-          className="rounded-full p-1.5 text-muted-foreground hover:bg-secondary"
+          className="ios-pressed ios-control flex items-center justify-center rounded-full text-muted-foreground hover:bg-secondary"
+          aria-label={`Remove ${label} from ride`}
         >
           <X className="h-4 w-4" />
         </button>

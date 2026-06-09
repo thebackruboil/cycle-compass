@@ -9,6 +9,7 @@
     "build:dev": "vite build --mode development",
     "deploy": "npm run build && npx wrangler@latest deploy",
     "deploy:dry": "npm run build && npx wrangler@latest deploy --dry-run",
+    "photos:refresh": "node --experimental-strip-types scripts/fetch-destination-photos.ts",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write ."

@@ -24,7 +24,7 @@ const categoryEmoji: Record<string, string> = {
   gem: "💎",
 };
 
-const MAP_VIEW_KEY = "cycle-explorer-map-view-v3";
+const MAP_VIEW_KEY = "cycle-explorer-map-view-v4";
 const DEFAULT_MAP_ZOOM = 14;
 
 interface StoredMapView {
@@ -60,8 +60,6 @@ export function MapView({ radiusKm, destinations, highlightIds, onSelect }: Prop
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
-  const initialRadiusEffectRef = useRef(true);
-  const skipInitialRadiusFitRef = useRef(false);
   const restoredRadiusRef = useRef<number | null>(null);
   const radiusRef = useRef(radiusKm);
   radiusRef.current = radiusKm;
@@ -84,10 +82,10 @@ export function MapView({ radiusKm, destinations, highlightIds, onSelect }: Prop
     const map = leaflet.map(containerRef.current, {
       center: storedView ? [storedView.lat, storedView.lng] : [HOME.lat, HOME.lng],
       zoom: storedView?.zoom ?? DEFAULT_MAP_ZOOM,
+      zoomSnap: 0.25,
       zoomControl: false,
       attributionControl: true,
     });
-    skipInitialRadiusFitRef.current = Boolean(storedView);
     restoredRadiusRef.current = storedView?.radiusKm ?? null;
 
     const saveView = () => {
@@ -149,22 +147,11 @@ export function MapView({ radiusKm, destinations, highlightIds, onSelect }: Prop
         dashArray: "6 6",
       })
       .addTo(mapRef.current);
-    if (skipInitialRadiusFitRef.current) {
-      skipInitialRadiusFitRef.current = false;
-      initialRadiusEffectRef.current = false;
-      return;
-    }
     if (restoredRadiusRef.current === radiusKm) {
       restoredRadiusRef.current = null;
-      initialRadiusEffectRef.current = false;
       return;
     }
     restoredRadiusRef.current = null;
-    if (initialRadiusEffectRef.current) {
-      initialRadiusEffectRef.current = false;
-      mapRef.current.setView([HOME.lat, HOME.lng], DEFAULT_MAP_ZOOM);
-      return;
-    }
     mapRef.current.fitBounds(circleRef.current.getBounds(), { padding: [30, 30] });
   }, [leaflet, radiusKm]);
 

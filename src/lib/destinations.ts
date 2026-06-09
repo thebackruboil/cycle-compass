@@ -1,3 +1,5 @@
+import { DESTINATION_PHOTOS } from "./destination-photos.ts";
+
 export type Category =
   | "supermarket"
   | "bakery"
@@ -38,73 +40,13 @@ export interface Destination {
   lat: number;
   lng: number;
   description: string;
-  photo: string;
+  photo?: string;
+  photoSourceUrl?: string;
+  photoTitle?: string;
+  photoKind?: "place" | "area";
+  photoAuthor?: string;
+  photoLicense?: string;
   nearby?: string[];
-}
-
-const CATEGORY_PHOTO_QUERIES: Record<Category, string> = {
-  cafe: "cafe",
-  bakery: "bakery",
-  park: "park",
-  lake: "lake",
-  viewpoint: "panorama",
-  market: "farmersmarket",
-  museum: "museum",
-  palace: "palace",
-  church: "church",
-  supermarket: "grocery",
-  gem: "landmark",
-};
-
-const DESTINATION_PHOTO_QUERIES: Record<string, string> = {
-  "north-cafe-08": "berryfarm",
-  "north-park-01": "heathland",
-  "north-park-02": "urbanpark",
-  "north-park-03": "pineforest",
-  "north-park-04": "englishgarden",
-  "north-park-05": "olympicpark",
-  "north-park-06": "baroquegarden",
-  "north-park-07": "wetland",
-  "north-park-08": "riversideforest",
-  "north-view-01": "windturbine",
-  "north-view-02": "allianzarena",
-  "north-view-03": "munichskyline",
-  "north-view-04": "alpspanorama",
-  "north-view-05": "riverbridge",
-  "north-view-06": "airplane",
-  "north-museum-01": "bmwmuseum",
-  "north-museum-02": "bmwwelt",
-  "north-museum-03": "olympicstadium",
-  "north-museum-04": "aviationmuseum",
-  "north-museum-05": "aircrafthangar",
-  "north-museum-06": "planetarium",
-  "north-museum-07": "observatory",
-  "north-palace-01": "baroquepalace",
-  "north-palace-02": "baroquepavilion",
-  "north-palace-03": "palacegarden",
-  "north-church-01": "historicchurch",
-  "north-church-07": "woodenchurch",
-  "north-gem-01": "visitorcenter",
-  "north-gem-02": "buriedchurch",
-  "north-gem-03": "helicopter",
-  "north-gem-04": "allianzarena",
-  "north-gem-05": "rowingcourse",
-  "north-gem-06": "bavarianvillage",
-  "north-gem-07": "palacecanal",
-  "north-gem-08": "researchcampus",
-};
-
-function stablePhotoLock(id: string) {
-  let hash = 0;
-  for (const character of id) {
-    hash = (hash * 31 + character.charCodeAt(0)) >>> 0;
-  }
-  return hash;
-}
-
-function destinationPhoto(id: string, category: Category) {
-  const query = DESTINATION_PHOTO_QUERIES[id] ?? CATEGORY_PHOTO_QUERIES[category];
-  return `https://loremflickr.com/1200/720/${query}?lock=${stablePhotoLock(id)}`;
 }
 
 function place(
@@ -115,6 +57,7 @@ function place(
   lng: number,
   description: string,
 ): Destination {
+  const photo = DESTINATION_PHOTOS[id];
   return {
     id,
     name,
@@ -122,12 +65,18 @@ function place(
     lat,
     lng,
     description,
-    photo: destinationPhoto(id, category),
+    photo: photo?.url,
+    photoSourceUrl: photo?.sourceUrl,
+    photoTitle: photo?.title,
+    photoKind: photo ? (photo.kind ?? "place") : undefined,
+    photoAuthor: photo?.author,
+    photoLicense: photo?.license,
   };
 }
 
-// Editorial launch catalog centered on Am Hart, Freimann, Feldmoching,
-// Garching and Schleißheim. Venue details should be revalidated before launch.
+// Editorial launch catalog centered on northern Munich, with durable public
+// landmarks filling the 10 km coverage toward the city center, west and east.
+// Venue details should be revalidated before launch.
 export const DESTINATIONS: Destination[] = [
   place(
     "north-cafe-01",
@@ -771,6 +720,103 @@ export const DESTINATIONS: Destination[] = [
     11.6685,
     "Science campus of unusual architecture, experiments and the ESO astronomy center.",
   ),
+
+  place(
+    "west-gem-01",
+    "Borstei",
+    "gem",
+    48.1700496,
+    11.5339595,
+    "A distinctive 1920s housing estate with courtyards, gardens and carefully integrated art.",
+  ),
+  place(
+    "west-park-01",
+    "Botanischer Garten München-Nymphenburg",
+    "park",
+    48.1632652,
+    11.4998294,
+    "Extensive botanical collections and glasshouses beside the Nymphenburg palace park.",
+  ),
+  place(
+    "west-palace-01",
+    "Schloss Nymphenburg",
+    "palace",
+    48.1582569,
+    11.5032967,
+    "A grand summer palace and park that make a rewarding western turnaround point.",
+  ),
+  place(
+    "central-gem-01",
+    "Königsplatz",
+    "gem",
+    48.1462995,
+    11.5656312,
+    "Monumental neoclassical square at the heart of Munich's museum quarter.",
+  ),
+  place(
+    "central-museum-01",
+    "Alte Pinakothek",
+    "museum",
+    48.1482838,
+    11.5699796,
+    "One of Europe's major Old Master collections in a landmark museum building.",
+  ),
+  place(
+    "central-view-01",
+    "Monopteros",
+    "viewpoint",
+    48.1498803,
+    11.5909208,
+    "Hilltop temple with a classic view across the English Garden toward the old town.",
+  ),
+  place(
+    "central-gem-02",
+    "Chinesischer Turm",
+    "gem",
+    48.1525525,
+    11.5920973,
+    "The English Garden's iconic wooden pagoda and a lively landmark for a park ride.",
+  ),
+  place(
+    "east-view-01",
+    "Friedensengel",
+    "viewpoint",
+    48.1413447,
+    11.5969959,
+    "A gilded city landmark above the Isar terraces with a broad westward view.",
+  ),
+  place(
+    "east-park-01",
+    "Denninger Anger",
+    "park",
+    48.1471146,
+    11.6232615,
+    "A long green corridor through Bogenhausen that works well as an eastbound cycling link.",
+  ),
+  place(
+    "east-park-02",
+    "Zamilapark",
+    "park",
+    48.1416941,
+    11.6462836,
+    "A neighborhood park and green destination that fills the quieter eastern side of the radius.",
+  ),
+  place(
+    "central-museum-02",
+    "Deutsches Museum",
+    "museum",
+    48.1300409,
+    11.582909,
+    "Major science and technology museum on its own island in the Isar.",
+  ),
+  place(
+    "central-market-01",
+    "Viktualienmarkt",
+    "market",
+    48.1352917,
+    11.5751078,
+    "Munich's central food market and a practical destination for a city ride.",
+  ),
 ];
 
 // Haversine distance in km
@@ -794,7 +840,6 @@ export interface Suggestion {
   title: string;
   blurb: string;
   emoji: string;
-  image: string;
   destinationIds: string[];
 }
 
@@ -804,7 +849,6 @@ export const SUGGESTIONS: Suggestion[] = [
     title: "Doorstep Heath",
     blurb: "A short green escape with a curious local landmark",
     emoji: "🌳",
-    image: "https://images.unsplash.com/photo-1476616853026-24c1f0309646?w=900&q=80",
     destinationIds: ["north-gem-01", "north-view-01", "north-church-01"],
   },
   {
@@ -812,7 +856,6 @@ export const SUGGESTIONS: Suggestion[] = [
     title: "Coffee & Market",
     blurb: "A quick neighborhood provisions loop",
     emoji: "☕",
-    image: "https://images.unsplash.com/photo-1445116572660-236099ec97a0?w=900&q=80",
     destinationIds: ["north-market-01", "north-cafe-01", "north-cafe-02"],
   },
   {
@@ -820,7 +863,6 @@ export const SUGGESTIONS: Suggestion[] = [
     title: "Three Lakes",
     blurb: "A waterside loop through Munich's north",
     emoji: "🏞️",
-    image: "https://images.unsplash.com/photo-1671647199313-18c890e58d72?w=900&q=80",
     destinationIds: ["north-lake-03", "north-lake-04", "north-lake-07"],
   },
   {
@@ -828,7 +870,6 @@ export const SUGGESTIONS: Suggestion[] = [
     title: "Arena & Isar",
     blurb: "Architecture, hidden corners and waterside paths",
     emoji: "💎",
-    image: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=900&q=80",
     destinationIds: ["north-gem-04", "north-gem-02", "north-lake-01"],
   },
   {
@@ -836,7 +877,6 @@ export const SUGGESTIONS: Suggestion[] = [
     title: "Palaces & Planes",
     blurb: "Aviation, baroque gardens and royal architecture",
     emoji: "🏰",
-    image: "https://images.unsplash.com/photo-1629194249077-1c8864b16c2e?w=900&q=80",
     destinationIds: ["north-museum-05", "north-palace-01", "north-palace-03"],
   },
   {
@@ -844,7 +884,6 @@ export const SUGGESTIONS: Suggestion[] = [
     title: "Campus & Cosmos",
     blurb: "A longer science-and-landscape adventure",
     emoji: "🌄",
-    image: "https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?w=900&q=80",
     destinationIds: ["north-lake-08", "north-gem-08", "north-museum-07"],
   },
 ];

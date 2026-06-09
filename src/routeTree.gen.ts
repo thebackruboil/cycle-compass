@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SavedRouteImport } from './routes/saved'
 import { Route as RideRouteImport } from './routes/ride'
+import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DestinationIdRouteImport } from './routes/destination.$id'
 
@@ -22,6 +23,11 @@ const SavedRoute = SavedRouteImport.update({
 const RideRoute = RideRouteImport.update({
   id: '/ride',
   path: '/ride',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiscoverRoute = DiscoverRouteImport.update({
+  id: '/discover',
+  path: '/discover',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -37,12 +43,14 @@ const DestinationIdRoute = DestinationIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/discover': typeof DiscoverRoute
   '/ride': typeof RideRoute
   '/saved': typeof SavedRoute
   '/destination/$id': typeof DestinationIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/discover': typeof DiscoverRoute
   '/ride': typeof RideRoute
   '/saved': typeof SavedRoute
   '/destination/$id': typeof DestinationIdRoute
@@ -50,20 +58,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/discover': typeof DiscoverRoute
   '/ride': typeof RideRoute
   '/saved': typeof SavedRoute
   '/destination/$id': typeof DestinationIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/ride' | '/saved' | '/destination/$id'
+  fullPaths: '/' | '/discover' | '/ride' | '/saved' | '/destination/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/ride' | '/saved' | '/destination/$id'
-  id: '__root__' | '/' | '/ride' | '/saved' | '/destination/$id'
+  to: '/' | '/discover' | '/ride' | '/saved' | '/destination/$id'
+  id: '__root__' | '/' | '/discover' | '/ride' | '/saved' | '/destination/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DiscoverRoute: typeof DiscoverRoute
   RideRoute: typeof RideRoute
   SavedRoute: typeof SavedRoute
   DestinationIdRoute: typeof DestinationIdRoute
@@ -85,6 +95,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RideRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/discover': {
+      id: '/discover'
+      path: '/discover'
+      fullPath: '/discover'
+      preLoaderRoute: typeof DiscoverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -104,6 +121,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DiscoverRoute: DiscoverRoute,
   RideRoute: RideRoute,
   SavedRoute: SavedRoute,
   DestinationIdRoute: DestinationIdRoute,

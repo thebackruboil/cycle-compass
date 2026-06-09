@@ -35,33 +35,37 @@
   --color-clay: var(--clay);
   --color-sky-soft: var(--sky-soft);
 
-  --font-display: "Fraunces", Georgia, serif;
-  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SFMono-Regular", ui-monospace, Menlo, Monaco, Consolas, monospace;
 
-  --shadow-sheet: 0 -8px 32px -8px color-mix(in oklab, var(--foreground) 12%, transparent);
-  --shadow-card: 0 2px 12px -4px color-mix(in oklab, var(--foreground) 10%, transparent);
+  --shadow-sheet: 0 -8px 32px -8px color-mix(in oklab, var(--foreground) 14%, transparent);
+  --shadow-card: 0 2px 12px -4px color-mix(in oklab, var(--foreground) 12%, transparent);
 }
 
 :root {
-  --radius: 1rem;
+  color-scheme: light dark;
+  --radius: 0.875rem;
 
-  /* Sage & cream — calm, exploration-focused */
-  --background: oklch(0.985 0.008 95);
-  --foreground: oklch(0.24 0.025 160);
+  /* Adaptive semantic colors inspired by Apple's system palette. */
+  --background: oklch(0.975 0.003 250);
+  --foreground: oklch(0.2 0.006 250);
 
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.24 0.025 160);
+  --card: oklch(1 0 0 / 92%);
+  --card-foreground: oklch(0.2 0.006 250);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.24 0.025 160);
+  --popover-foreground: oklch(0.2 0.006 250);
 
-  --primary: oklch(0.48 0.08 160);
-  --primary-foreground: oklch(0.985 0.008 95);
+  --primary: oklch(0.51 0.11 160);
+  --primary-foreground: oklch(1 0 0);
 
-  --secondary: oklch(0.94 0.02 130);
-  --secondary-foreground: oklch(0.3 0.04 160);
+  --secondary: oklch(0.935 0.006 250);
+  --secondary-foreground: oklch(0.25 0.01 250);
 
-  --muted: oklch(0.95 0.012 100);
-  --muted-foreground: oklch(0.5 0.02 150);
+  --muted: oklch(0.94 0.005 250);
+  --muted-foreground: oklch(0.48 0.012 250);
 
   --accent: oklch(0.72 0.12 55);
   --accent-foreground: oklch(0.18 0.02 160);
@@ -69,8 +73,8 @@
   --destructive: oklch(0.6 0.2 25);
   --destructive-foreground: oklch(0.985 0 0);
 
-  --border: oklch(0.9 0.015 110);
-  --input: oklch(0.92 0.015 110);
+  --border: oklch(0.86 0.006 250 / 85%);
+  --input: oklch(0.88 0.006 250);
   --ring: oklch(0.48 0.08 160);
 
   --sand: oklch(0.93 0.03 85);
@@ -85,12 +89,12 @@
 }
 
 .dark {
-  --background: oklch(0.18 0.015 160);
-  --foreground: oklch(0.95 0.01 95);
-  --card: oklch(0.22 0.02 160);
-  --card-foreground: oklch(0.95 0.01 95);
-  --popover: oklch(0.22 0.02 160);
-  --popover-foreground: oklch(0.95 0.01 95);
+  --background: oklch(0.17 0.006 250);
+  --foreground: oklch(0.96 0.003 250);
+  --card: oklch(0.23 0.008 250 / 92%);
+  --card-foreground: oklch(0.96 0.003 250);
+  --popover: oklch(0.23 0.008 250);
+  --popover-foreground: oklch(0.96 0.003 250);
   --primary: oklch(0.7 0.1 150);
   --primary-foreground: oklch(0.18 0.015 160);
   --secondary: oklch(0.28 0.025 160);
@@ -107,16 +111,106 @@
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
-  html, body, #root { height: 100%; }
+  * {
+    border-color: var(--color-border);
+    -webkit-tap-highlight-color: transparent;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     overscroll-behavior-y: none;
+    text-rendering: optimizeLegibility;
   }
-  h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.02em; }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    touch-action: manipulation;
+  }
+  :focus-visible {
+    outline: 3px solid color-mix(in oklab, var(--color-primary) 55%, transparent);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--color-primary) 25%, transparent);
+  }
+}
+
+@layer components {
+  .ios-large-title {
+    font-size: clamp(2rem, 8vw, 2.125rem);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+  }
+  .ios-footnote {
+    font-size: 0.8125rem;
+    line-height: 1.25rem;
+    color: var(--color-muted-foreground);
+  }
+  .ios-control {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
+  .ios-material {
+    background: color-mix(in oklab, var(--color-card) 82%, transparent);
+    border: 1px solid color-mix(in oklab, var(--color-border) 72%, transparent);
+    box-shadow: 0 8px 28px color-mix(in oklab, var(--color-foreground) 12%, transparent);
+    backdrop-filter: saturate(180%) blur(24px);
+    -webkit-backdrop-filter: saturate(180%) blur(24px);
+  }
+  .ios-pressed {
+    transition:
+      transform 120ms ease,
+      opacity 120ms ease,
+      background-color 180ms ease;
+  }
+  .ios-pressed:active {
+    opacity: 0.72;
+    transform: scale(0.97);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --background: oklch(0.17 0.006 250);
+    --foreground: oklch(0.96 0.003 250);
+    --card: oklch(0.23 0.008 250 / 92%);
+    --card-foreground: oklch(0.96 0.003 250);
+    --popover: oklch(0.23 0.008 250);
+    --popover-foreground: oklch(0.96 0.003 250);
+    --secondary: oklch(0.28 0.008 250);
+    --secondary-foreground: oklch(0.96 0.003 250);
+    --muted: oklch(0.26 0.008 250);
+    --muted-foreground: oklch(0.72 0.008 250);
+    --border: oklch(1 0 0 / 13%);
+    --input: oklch(1 0 0 / 17%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Leaflet base */
@@ -128,9 +222,11 @@
 }
 .leaflet-control-attribution {
   font-size: 9px !important;
-  background: rgba(255,255,255,0.7) !important;
+  background: rgba(255, 255, 255, 0.7) !important;
 }
-.leaflet-control-zoom { display: none !important; }
+.leaflet-control-zoom {
+  display: none !important;
+}
 
 .home-marker {
   background: var(--color-primary);
@@ -155,5 +251,9 @@
 }
 
 /* Hide scrollbar utility */
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}

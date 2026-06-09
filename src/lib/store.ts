@@ -4,11 +4,12 @@ type State = {
   saved: string[];
   visited: string[];
   ride: string[];
+  discoveryPassed: string[];
   notes: Record<string, string>;
 };
 
 const KEY = "cycle-explorer-state";
-const initial: State = { saved: [], visited: [], ride: [], notes: {} };
+const initial: State = { saved: [], visited: [], ride: [], discoveryPassed: [], notes: {} };
 
 let state: State = initial;
 const listeners = new Set<() => void>();
@@ -61,6 +62,11 @@ export const actions = {
     set((s) => (s.ride.includes(id) ? s : { ...s, ride: [...s.ride, id] })),
   removeFromRide: (id: string) => set((s) => ({ ...s, ride: s.ride.filter((x) => x !== id) })),
   clearRide: () => set((s) => ({ ...s, ride: [] })),
+  passDiscovery: (id: string) =>
+    set((s) =>
+      s.discoveryPassed.includes(id) ? s : { ...s, discoveryPassed: [...s.discoveryPassed, id] },
+    ),
+  resetDiscovery: () => set((s) => ({ ...s, discoveryPassed: [] })),
   markVisited: (id: string) =>
     set((s) => ({
       ...s,
