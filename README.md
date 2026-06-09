@@ -109,6 +109,7 @@ be revalidated before a public launch.
 - Reorder stops and optimize loops against real cycling routes
 - Sync saved places and ride history across devices
 - Expand the destination catalog beyond Munich
+- Make interaction like hunting Pokemons
 
 ## Acknowledgements
 
