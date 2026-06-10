@@ -100,6 +100,9 @@ engine. Suggested loops are assembled from curated stops and are not optimized
 against the street or cycle-path network. Venue details and coordinates should
 be revalidated before a public launch.
 
+## Demo
+https://cycle-compass.edwin-rs.workers.dev/
+
 ## Roadmap (if ever I touch it)
 
 - Make the home location configurable
